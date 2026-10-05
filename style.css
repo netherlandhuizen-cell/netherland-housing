@@ -394,9 +394,43 @@ body {
   border-radius: 50%;
 }
 
-.chip-green .chip-dot { background: var(--tier-green); }
-.chip-blue .chip-dot { background: var(--tier-blue); }
-.chip-purple .chip-dot { background: var(--tier-purple); }
+.chip-green .chip-dot { background: var(--tier-green); box-shadow: 0 0 6px var(--tier-green); }
+.chip-blue .chip-dot { background: #00f2fe; box-shadow: 0 0 6px #00f2fe; }
+.chip-purple .chip-dot { background: var(--tier-purple); box-shadow: 0 0 6px var(--tier-purple); }
+
+/* Vibrant Dark Vector Tiles Filter (High-contrast roads, land, water) */
+.vibrant-dark-tiles {
+  filter: invert(100%) hue-rotate(180deg) brightness(92%) contrast(115%) saturate(120%);
+}
+
+/* Layer Switcher Styling */
+.leaflet-control-layers {
+  background: rgba(18, 18, 22, 0.92) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text-primary) !important;
+  border-radius: var(--radius-sm) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 12px !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+.leaflet-control-layers-expanded {
+  padding: 8px 12px !important;
+}
+
+.leaflet-control-layers label {
+  color: var(--text-secondary) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  margin-bottom: 4px !important;
+  cursor: pointer !important;
+}
+
+.leaflet-control-layers label:hover {
+  color: var(--text-primary) !important;
+}
 
 /* Clean Loading Overlay */
 .map-loading-overlay {
@@ -432,7 +466,7 @@ body {
 }
 
 /* ==========================================================================
-   Clean Custom Map Markers (Rounded Price Pills)
+   Clean Custom Map Markers (Rounded Price Pills with Glowing Borders)
    ========================================================================== */
 
 .custom-map-pin {
@@ -446,15 +480,14 @@ body {
   gap: 5px;
   padding: 3px 8px;
   border-radius: var(--radius-pill);
-  background: #18181b;
-  border: 1.5px solid #27272a;
+  background: rgba(18, 18, 22, 0.95);
+  backdrop-filter: blur(8px);
   color: #ffffff;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   font-family: var(--font-sans);
   cursor: pointer;
   white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
   transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -465,29 +498,50 @@ body {
   flex-shrink: 0;
 }
 
-/* Color Coded Tiers */
-.price-pill-pin.tier-green .pin-dot { background: var(--tier-green); }
+/* Color Coded Tiers with Subtle Glowing Borders */
+.price-pill-pin.tier-green {
+  border: 1.5px solid #10b981;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), 0 0 10px rgba(16, 185, 129, 0.45);
+}
+.price-pill-pin.tier-green .pin-dot {
+  background: #10b981;
+  box-shadow: 0 0 6px #10b981;
+}
 .price-pill-pin.tier-green:hover,
 .price-pill-pin.tier-green.active-pin {
-  border-color: var(--tier-green);
-  transform: scale(1.1);
-  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+  border-color: #34d399;
+  transform: scale(1.12);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.8), 0 0 18px rgba(16, 185, 129, 0.7);
 }
 
-.price-pill-pin.tier-blue .pin-dot { background: var(--tier-blue); }
+.price-pill-pin.tier-blue {
+  border: 1.5px solid #00f2fe;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), 0 0 10px rgba(0, 242, 254, 0.45);
+}
+.price-pill-pin.tier-blue .pin-dot {
+  background: #00f2fe;
+  box-shadow: 0 0 6px #00f2fe;
+}
 .price-pill-pin.tier-blue:hover,
 .price-pill-pin.tier-blue.active-pin {
-  border-color: var(--tier-blue);
-  transform: scale(1.1);
-  box-shadow: 0 4px 14px rgba(56, 189, 248, 0.3);
+  border-color: #38bdf8;
+  transform: scale(1.12);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.8), 0 0 18px rgba(0, 242, 254, 0.7);
 }
 
-.price-pill-pin.tier-purple .pin-dot { background: var(--tier-purple); }
+.price-pill-pin.tier-purple {
+  border: 1.5px solid #c084fc;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), 0 0 10px rgba(192, 132, 252, 0.45);
+}
+.price-pill-pin.tier-purple .pin-dot {
+  background: #c084fc;
+  box-shadow: 0 0 6px #c084fc;
+}
 .price-pill-pin.tier-purple:hover,
 .price-pill-pin.tier-purple.active-pin {
-  border-color: var(--tier-purple);
-  transform: scale(1.1);
-  box-shadow: 0 4px 14px rgba(168, 85, 247, 0.3);
+  border-color: #e879f9;
+  transform: scale(1.12);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.8), 0 0 18px rgba(192, 132, 252, 0.7);
 }
 
 /* Leaflet Popup Styling */

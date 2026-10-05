@@ -63,32 +63,60 @@ function initMap() {
   // Re-add zoom control to bottom right
   L.control.zoom({ position: "bottomright" }).addTo(map);
 
-  // Base Layer 1: Esri Dark Gray Canvas (Sleek dark basemap, zero watermark, fast CloudFront CDN)
-  const esriDarkGray = L.tileLayer(
+  // Layer 1: Vibrant Dark Vector (High-contrast dark mode highlighting roads, landmasses, water)
+  const vibrantDark = L.tileLayer(
+    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors',
+      maxZoom: 19,
+      className: "vibrant-dark-tiles"
+    }
+  );
+
+  // Layer 2: Satellite Hybrid (Vibrant satellite terrain with roads & city boundaries)
+  const satelliteBase = L.tileLayer(
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    {
+      attribution: "Tiles &copy; Esri &mdash; Esri, i-cubed, USDA, USGS",
+      maxZoom: 19
+    }
+  );
+  const boundariesOverlay = L.tileLayer(
+    "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
+    {
+      maxZoom: 19
+    }
+  );
+  const satelliteHybrid = L.layerGroup([satelliteBase, boundariesOverlay]);
+
+  // Layer 3: Vibrant Topographic Terrain (Rich elevation contours, rivers, nature parks)
+  const topoMap = L.tileLayer(
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
+    {
+      attribution: "Tiles &copy; Esri &mdash; DeLorme, NAVTEQ, TomTom",
+      maxZoom: 19
+    }
+  );
+
+  // Layer 4: Minimalist Dark Canvas
+  const darkCanvas = L.tileLayer(
     "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
     {
-      attribution: "Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ",
+      attribution: "Tiles &copy; Esri &mdash; Esri, DeLorme",
       maxZoom: 18,
       maxNativeZoom: 16
     }
   );
 
-  // Base Layer 2: Standard OpenStreetMap (Clean open tiles, zero watermark)
-  const osmStandard = L.tileLayer(
-    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors',
-      maxZoom: 19
-    }
-  );
-
-  // Set Esri Dark Gray as default (matches dark mode UI)
-  esriDarkGray.addTo(map);
+  // Set Vibrant Dark Vector as active default (highlights roads and water against dark background)
+  vibrantDark.addTo(map);
 
   // Add clean layer switcher control
   const baseLayers = {
-    "Dark Mode Map": esriDarkGray,
-    "OpenStreetMap": osmStandard
+    "Vibrant Dark": vibrantDark,
+    "Satellite Hybrid": satelliteHybrid,
+    "Topographic Terrain": topoMap,
+    "Minimal Dark Canvas": darkCanvas
   };
   L.control.layers(baseLayers, null, { position: "topright" }).addTo(map);
 
