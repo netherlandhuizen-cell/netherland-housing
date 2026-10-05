@@ -1,11 +1,11 @@
 /**
- * NETHERLANDHUIZEN // GEOSPATIAL RADAR TELEMETRY ENGINE
- * ------------------------------------------------------
- * High-tech infrastructure monitoring controller:
- * - CartoDB Dark_Matter high-contrast cyber tile layer
- * - Price-tiered telemetry pill markers (<€1.3k budget, €1.3k-€2k mid, >€2k premium)
- * - Real-time Supabase REST/v1 synchronization
- * - Bi-directional interactive targeting (Cards <-> Map Pins)
+ * NetherlandHuizen Frontend Application
+ * ---------------------------------------
+ * Clean modern SaaS rental tracker (Vercel/Stripe style)
+ * - Zero-watermark, reliable map tiles (Esri Dark Gray & OpenStreetMap)
+ * - Subtle, clean price pill markers with color-coded dots
+ * - Real-time Supabase REST API connection
+ * - Filter by search query, city, budget, and price sort
  */
 
 // Supabase REST API Configuration
@@ -46,41 +46,63 @@ const dom = {
 };
 
 // ---------------------------------------------------------------------------
-// 1. Map Initialization (CartoDB Dark_Matter Tiles)
+// 1. Map Initialization (Clean, 100% Free, Zero-Watermark Tiles)
 // ---------------------------------------------------------------------------
 
 function initMap() {
   if (map) return;
 
-  // Initialize Leaflet map with dark theme presets
+  // Initialize map
   map = L.map("map", {
     center: DEFAULT_MAP_CENTER,
     zoom: DEFAULT_MAP_ZOOM,
-    zoomControl: false, // Cleaner custom look, or we add custom position
+    zoomControl: false,
     scrollWheelZoom: true
   });
 
-  // Re-add zoom control to bottom right so it doesn't collide with floating HUD
+  // Re-add zoom control to bottom right
   L.control.zoom({ position: "bottomright" }).addTo(map);
 
-  // CartoDB Dark_Matter Tiles (Sleek, high-contrast dark cyber aesthetic)
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>',
-    subdomains: "abcd",
-    maxZoom: 20
-  }).addTo(map);
+  // Base Layer 1: Esri Dark Gray Canvas (Sleek dark basemap, zero watermark, fast CloudFront CDN)
+  const esriDarkGray = L.tileLayer(
+    "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+    {
+      attribution: "Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ",
+      maxZoom: 18,
+      maxNativeZoom: 16
+    }
+  );
 
-  // LayerGroup for all telemetry pins
+  // Base Layer 2: Standard OpenStreetMap (Clean open tiles, zero watermark)
+  const osmStandard = L.tileLayer(
+    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors',
+      maxZoom: 19
+    }
+  );
+
+  // Set Esri Dark Gray as default (matches dark mode UI)
+  esriDarkGray.addTo(map);
+
+  // Add clean layer switcher control
+  const baseLayers = {
+    "Dark Mode Map": esriDarkGray,
+    "OpenStreetMap": osmStandard
+  };
+  L.control.layers(baseLayers, null, { position: "topright" }).addTo(map);
+
+  // LayerGroup for all pins
   markersLayer = L.layerGroup().addTo(map);
 
-  // Hide loading overlay once map renders
+  // Hide loading overlay once map is loaded
   map.whenReady(() => {
     dom.mapOverlay.classList.add("hidden");
   });
 }
 
 // ---------------------------------------------------------------------------
-// 2. Data Ingestion from Supabase REST API
+// 2. Fetch Data from Supabase REST API
 // ---------------------------------------------------------------------------
 
 async function fetchProperties() {
@@ -99,16 +121,16 @@ async function fetchProperties() {
     });
 
     if (!response.ok) {
-      throw new Error(`Supabase REST error: HTTP ${response.status} ${response.statusText}`);
+      throw new Error(`Failed to fetch listings: HTTP ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json();
     allProperties = Array.isArray(data) ? data : [];
 
-    // Parse coordinates and numeric price for high-speed indexing
+    // Parse numeric price and price tier for filtering
     allProperties.forEach(prop => {
       prop._numericPrice = extractNumericPrice(prop.price);
-      prop._priceTier = determinePriceTier(prop._numericPrice);
+      prop._tier = determineTier(prop._numericPrice);
       prop._lat = prop.latitude != null ? parseFloat(prop.latitude) : null;
       prop._lon = prop.longitude != null ? parseFloat(prop.longitude) : null;
     });
@@ -116,12 +138,12 @@ async function fetchProperties() {
     updateDynamicCityOptions();
     applyFilters();
   } catch (error) {
-    console.error("Telemetry acquisition failed:", error);
+    console.error("Supabase connection error:", error);
     dom.listingsGrid.innerHTML = `
-      <div style="grid-column: 1 / -1; padding: 2.5rem; background: rgba(244,63,94,0.1); border: 1px solid rgba(244,63,94,0.4); border-radius: 12px; color: #fecdd3; text-align: center;">
-        <h4 style="font-family: var(--font-mono); margin-bottom: 0.5rem; font-weight: 700; color: #fb7185;">⚠ TELEMETRY ACQUISITION OFFLINE</h4>
-        <p style="font-size: 0.85rem; font-family: var(--font-mono);">${error.message}</p>
-        <p style="font-size: 0.75rem; margin-top: 0.6rem; color: #fda4af;">Check Supabase API configuration or verify project status.</p>
+      <div style="grid-column: 1 / -1; padding: 2rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 10px; color: #fca5a5; text-align: center;">
+        <h4 style="margin-bottom: 0.4rem; font-weight: 600;">Unable to connect to Supabase</h4>
+        <p style="font-size: 0.85rem;">${escapeHtml(error.message)}</p>
+        <p style="font-size: 0.78rem; margin-top: 0.5rem; color: #f87171;">Please ensure your Supabase project is active.</p>
       </div>
     `;
   } finally {
@@ -131,18 +153,18 @@ async function fetchProperties() {
 }
 
 // ---------------------------------------------------------------------------
-// 3. Price Tier Determination
+// 3. Price Tier Classification
 // ---------------------------------------------------------------------------
 
-function determinePriceTier(price) {
-  if (!price) return "tier-mid";
-  if (price < 1300) return "tier-budget";     // Green (< €1,300)
-  if (price <= 2000) return "tier-mid";      // Cyan (€1,300 - €2,000)
-  return "tier-premium";                     // Purple (> €2,000)
+function determineTier(price) {
+  if (!price) return "tier-blue";
+  if (price < 1300) return "tier-green";    // Budget (< €1,300)
+  if (price <= 2000) return "tier-blue";    // Mid-tier (€1,300 - €2,000)
+  return "tier-purple";                     // Premium (> €2,000)
 }
 
 // ---------------------------------------------------------------------------
-// 4. Filtering, Searching & Sorting
+// 4. Filtering, Searching, & Sorting Logic
 // ---------------------------------------------------------------------------
 
 function applyFilters() {
@@ -152,7 +174,7 @@ function applyFilters() {
   const sortMode = dom.filterSort.value;
 
   filteredProperties = allProperties.filter(item => {
-    // Search Term match across multiple metadata points
+    // Search Term match
     if (searchTerm) {
       const titleMatch = (item.title || "").toLowerCase().includes(searchTerm);
       const cityMatch = (item.city || "").toLowerCase().includes(searchTerm);
@@ -163,7 +185,7 @@ function applyFilters() {
       }
     }
 
-    // Sector / City Filter
+    // City Filter
     if (selectedCity !== "all") {
       const itemCity = (item.city || "").toLowerCase();
       if (!itemCity.includes(selectedCity)) {
@@ -171,7 +193,7 @@ function applyFilters() {
       }
     }
 
-    // Budget Threshold Filter
+    // Max Price Filter
     if (maxPrice !== "all") {
       const maxVal = parseFloat(maxPrice);
       if (item._numericPrice && item._numericPrice > maxVal) {
@@ -188,7 +210,7 @@ function applyFilters() {
   } else if (sortMode === "price-desc") {
     filteredProperties.sort((a, b) => (b._numericPrice || 0) - (a._numericPrice || 0));
   } else {
-    // Recent Signal (id descending)
+    // Newest first (id desc)
     filteredProperties.sort((a, b) => (b.id || 0) - (a.id || 0));
   }
 
@@ -200,7 +222,7 @@ function applyFilters() {
 function updateStats() {
   const count = filteredProperties.length;
   dom.statCount.textContent = count;
-  dom.listingsCountBadge.textContent = `${count} ${count === 1 ? 'NODE CAPTURED' : 'NODES CAPTURED'}`;
+  dom.listingsCountBadge.textContent = `${count} ${count === 1 ? 'property' : 'properties'}`;
 
   const citiesSet = new Set(
     allProperties
@@ -218,12 +240,12 @@ function updateDynamicCityOptions() {
       .filter(c => c.length > 0)
   )).sort();
 
-  dom.filterCity.innerHTML = `<option value="all">All Sectors (${allProperties.length})</option>`;
+  dom.filterCity.innerHTML = `<option value="all">All Cities (${allProperties.length})</option>`;
   cities.forEach(city => {
     const cityCount = allProperties.filter(p => (p.city || "").trim().toLowerCase() === city.toLowerCase()).length;
     const opt = document.createElement("option");
     opt.value = city.toLowerCase();
-    opt.textContent = `${city} [${cityCount}]`;
+    opt.textContent = `${city} (${cityCount})`;
     dom.filterCity.appendChild(opt);
   });
 
@@ -233,7 +255,7 @@ function updateDynamicCityOptions() {
 }
 
 // ---------------------------------------------------------------------------
-// 5. Leaflet Radar Markers (Sleek Price Data Pills)
+// 5. Leaflet Map Markers & Popups (Clean Price Pills)
 // ---------------------------------------------------------------------------
 
 function renderMarkers() {
@@ -253,35 +275,35 @@ function renderMarkers() {
     validLatLngs.push(latLng);
 
     const shortPrice = formatShortPrice(prop.price);
-    const tier = prop._priceTier || "tier-mid";
+    const tier = prop._tier || "tier-blue";
     const key = prop.id || prop.link;
 
-    // Custom Rounded Data Pill Marker Icon
+    // Clean Rounded Price Pill Marker
     const pinIcon = L.divIcon({
       className: "custom-map-pin",
       html: `
-        <div class="data-pill-marker ${tier}" id="marker-pill-${prop.id}">
-          <span class="pill-status-dot"></span>
-          <span class="pill-price-text">${escapeHtml(shortPrice)}</span>
+        <div class="price-pill-pin ${tier}" id="marker-pill-${prop.id}">
+          <span class="pin-dot"></span>
+          <span>${escapeHtml(shortPrice)}</span>
         </div>
       `,
-      iconSize: [85, 26],
-      iconAnchor: [42, 13],
-      popupAnchor: [0, -16]
+      iconSize: [80, 26],
+      iconAnchor: [40, 13],
+      popupAnchor: [0, -15]
     });
 
     const marker = L.marker(latLng, { icon: pinIcon });
 
-    // High-Tech Cyber Popup Card
+    // Clean Minimalist Popup
     const popupContent = `
-      <div class="cyber-popup-card">
-        <div class="cyber-popup-header">
-          <span class="cyber-popup-city">${escapeHtml(prop.city || 'SECTOR NL')}</span>
-          <span class="cyber-popup-price">${escapeHtml(prop.price || 'P.O.R.')}</span>
+      <div class="clean-popup-card">
+        <div class="clean-popup-header">
+          <span class="clean-popup-city">${escapeHtml(prop.city || 'Netherlands')}</span>
+          <span class="clean-popup-price">${escapeHtml(prop.price || '')}</span>
         </div>
-        <div class="cyber-popup-title">${escapeHtml(prop.title || 'Telemetry Node')}</div>
-        ${prop.commute ? `<div class="cyber-popup-commute">🚲 ${escapeHtml(prop.commute)}</div>` : ''}
-        ${prop.link ? `<a href="${escapeHtml(prop.link)}" target="_blank" rel="noopener noreferrer" class="btn-cyber-popup-link">OPEN SOURCE LISTING ↗</a>` : ''}
+        <div class="clean-popup-title">${escapeHtml(prop.title || 'Rental Listing')}</div>
+        ${prop.commute ? `<div class="clean-popup-commute">🚲 ${escapeHtml(prop.commute)}</div>` : ''}
+        ${prop.link ? `<a href="${escapeHtml(prop.link)}" target="_blank" rel="noopener noreferrer" class="btn-popup-link">View Listing Details ↗</a>` : ''}
       </div>
     `;
 
@@ -293,10 +315,10 @@ function renderMarkers() {
     }
   });
 
-  // Fit bounds if valid coordinates exist
+  // Adjust view bounds to fit pins
   if (validLatLngs.length > 0) {
     const bounds = L.latLngBounds(validLatLngs);
-    map.fitBounds(bounds, { padding: [60, 60], maxZoom: 14 });
+    map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
   } else {
     map.setView(DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM);
   }
@@ -308,7 +330,7 @@ function zoomToProperty(key, lat, lon) {
   if (lat && lon && !isNaN(lat) && !isNaN(lon)) {
     map.flyTo([lat, lon], 14, { duration: 1.1 });
 
-    if (window.innerWidth < 1024) {
+    if (window.innerWidth < 768) {
       dom.mapWrapper.scrollIntoView({ behavior: 'smooth' });
     }
 
@@ -316,13 +338,13 @@ function zoomToProperty(key, lat, lon) {
     if (marker) {
       setTimeout(() => {
         marker.openPopup();
-      }, 650);
+      }, 600);
     }
   }
 }
 
 // ---------------------------------------------------------------------------
-// 6. Listings Telemetry Cards Rendering
+// 6. Listings Cards Rendering
 // ---------------------------------------------------------------------------
 
 function renderListings() {
@@ -339,46 +361,45 @@ function renderListings() {
 
   filteredProperties.forEach(prop => {
     const card = document.createElement("article");
-    const tier = prop._priceTier || "tier-mid";
-    card.className = `cyber-card ${tier}`;
+    card.className = "property-card";
 
     const key = prop.id || prop.link;
     const hasCoords = prop._lat != null && prop._lon != null && !isNaN(prop._lat) && !isNaN(prop._lon);
 
     card.innerHTML = `
       <div>
-        <div class="card-top-row">
-          <span class="card-sector-tag">${escapeHtml(prop.city || 'SECTOR')}</span>
-          <span class="card-price-tag">${escapeHtml(prop.price || '€ --')}</span>
+        <div class="card-top">
+          <span class="card-city-tag">${escapeHtml(prop.city || 'Netherlands')}</span>
+          <span class="card-price">${escapeHtml(prop.price || 'Price on request')}</span>
         </div>
-        <h3 class="card-title">${escapeHtml(prop.title || 'Housing Unit')}</h3>
+        <h3 class="card-title">${escapeHtml(prop.title || 'Rental Listing')}</h3>
       </div>
 
-      <div class="card-telemetry-specs">
-        ${prop.size ? `<span class="cyber-spec-badge" title="Floor Area">📐 ${escapeHtml(prop.size)}</span>` : ''}
-        ${prop.rooms ? `<span class="cyber-spec-badge" title="Room Count">🛏️ ${escapeHtml(prop.rooms)} ${parseInt(prop.rooms) === 1 ? 'room' : 'rooms'}</span>` : ''}
-        ${prop.interior ? `<span class="cyber-spec-badge" title="Interior Setup">🛋️ ${escapeHtml(prop.interior)}</span>` : ''}
-        ${prop.commute ? `<div class="cyber-commute-badge" title="OSRM Calculated Commute">🚲 <span>${escapeHtml(prop.commute)}</span></div>` : ''}
+      <div class="card-specs">
+        ${prop.size ? `<span class="spec-pill" title="Living Area">📏 ${escapeHtml(prop.size)}</span>` : ''}
+        ${prop.rooms ? `<span class="spec-pill" title="Rooms">🛏️ ${escapeHtml(prop.rooms)} ${parseInt(prop.rooms) === 1 ? 'room' : 'rooms'}</span>` : ''}
+        ${prop.interior ? `<span class="spec-pill" title="Furnishing">🛋️ ${escapeHtml(prop.interior)}</span>` : ''}
+        ${prop.commute ? `<div class="commute-pill" title="Bike commute to central station">🚲 <span>${escapeHtml(prop.commute)}</span></div>` : ''}
       </div>
 
-      <div class="card-actions-row">
+      <div class="card-actions">
         ${hasCoords ? `
-          <button class="btn-radar-locate" data-key="${escapeHtml(key)}" data-lat="${prop._lat}" data-lon="${prop._lon}" title="Lock Target on Radar">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
-            <span>TARGET</span>
+          <button class="btn-card-locate" data-key="${escapeHtml(key)}" data-lat="${prop._lat}" data-lon="${prop._lon}" title="Locate on Map">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+            <span>Show on Map</span>
           </button>
         ` : ''}
         ${prop.link ? `
-          <a href="${escapeHtml(prop.link)}" target="_blank" rel="noopener noreferrer" class="btn-card-source">
-            <span>SOURCE INTEL</span>
+          <a href="${escapeHtml(prop.link)}" target="_blank" rel="noopener noreferrer" class="btn-card-link">
+            <span>View Listing</span>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
           </a>
         ` : ''}
       </div>
     `;
 
-    // Interactive targeting button
-    const locateBtn = card.querySelector(".btn-radar-locate");
+    // Locate button click handler
+    const locateBtn = card.querySelector(".btn-card-locate");
     if (locateBtn) {
       locateBtn.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -386,7 +407,7 @@ function renderListings() {
       });
     }
 
-    // Card hover highlights corresponding pin on the map
+    // Hover card highlights corresponding pin on the map
     card.addEventListener("mouseenter", () => {
       const pinElement = document.getElementById(`marker-pill-${prop.id}`);
       if (pinElement) {
@@ -445,7 +466,7 @@ function resetAllFilters() {
 }
 
 // ---------------------------------------------------------------------------
-// 8. Event Listeners & Bootstrapping
+// 8. Event Listeners & Bootstrap
 // ---------------------------------------------------------------------------
 
 function setupEventListeners() {
@@ -460,7 +481,7 @@ function setupEventListeners() {
 
   dom.btnResetMap.addEventListener("click", () => {
     if (map) {
-      map.flyTo(DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM, { duration: 0.9 });
+      map.flyTo(DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM, { duration: 1.0 });
     }
   });
 }

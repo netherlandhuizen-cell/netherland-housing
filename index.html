@@ -3,190 +3,168 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NetherlandHuizen // Geospatial Housing Telemetry & Radar</title>
-  <meta name="description" content="High-tech real-time geospatial housing radar for Netherlands rentals with automated commute tracking, live coordinates, and interactive dark-mode telemetry.">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300f2fe'><circle cx='12' cy='12' r='10' stroke='%2300f2fe' stroke-width='2' fill='none'/><circle cx='12' cy='12' r='3'/></svg>">
+  <title>NetherlandHuizen | Netherlands Rental Housing Tracker</title>
+  <meta name="description" content="Find rental properties across Amsterdam, Rotterdam, Utrecht, and the Netherlands with real-time listings, interactive map, and commute times.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233b82f6'><path d='M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z'/></svg>">
   
-  <!-- Fonts: Space Grotesk + JetBrains Mono -->
+  <!-- Font: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
   
-  <!-- Cyber Dashboard Stylesheet -->
+  <!-- Stylesheet -->
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="cyber-theme">
-  <!-- Top Telemetry Command Bar -->
-  <header class="cyber-header">
-    <div class="header-inner">
-      <div class="brand-cluster">
-        <div class="radar-glyph-wrap">
-          <div class="radar-sweep-disc"></div>
-          <span class="radar-dot"></span>
-        </div>
-        <div class="brand-titles">
-          <div class="brand-sup">
-            <span class="status-indicator-live">
-              <span class="pulse-beam"></span>
-              SYS_ACTIVE
-            </span>
-            <span class="brand-tag">NETHERLANDS INFRASTRUCTURE</span>
+<body>
+  <!-- Clean Navbar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="brand">
+        <div class="brand-logo">🏠</div>
+        <div class="brand-info">
+          <div class="brand-title">
+            <span>NetherlandHuizen</span>
+            <span class="live-pill"><span class="dot"></span> Live</span>
           </div>
-          <h1 class="brand-logo">NETHERLAND<span>HUIZEN</span> <span class="version-badge">RADAR v2.5</span></h1>
+          <p class="brand-subtitle">Real-time rental housing tracker for the Netherlands</p>
         </div>
       </div>
 
-      <!-- Telemetry Stats Ticker -->
-      <div class="telemetry-bar">
-        <div class="telemetry-cell">
-          <span class="cell-label">INDEXED NODES</span>
-          <span class="cell-val mono" id="stat-count">0</span>
+      <div class="nav-stats">
+        <div class="stat-badge">
+          <span class="stat-num" id="stat-count">0</span>
+          <span class="stat-text">Properties</span>
         </div>
-        <div class="telemetry-cell">
-          <span class="cell-label">ACTIVE SECTORS</span>
-          <span class="cell-val mono" id="stat-cities">0</span>
+        <div class="stat-badge">
+          <span class="stat-num" id="stat-cities">0</span>
+          <span class="stat-text">Cities</span>
         </div>
-        <div class="telemetry-cell hide-mobile">
-          <span class="cell-label">RADAR MESH</span>
-          <span class="cell-val mono text-cyan">ONLINE</span>
-        </div>
-        <button id="btn-refresh" class="btn-cyber-action" title="Force sync with Supabase REST API">
-          <svg class="refresh-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-          <span>SYNC FEED</span>
+        <button id="btn-refresh" class="btn-refresh" title="Check for newest listings">
+          <svg class="icon-refresh" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+          <span>Refresh</span>
         </button>
       </div>
     </div>
   </header>
 
-  <!-- Main Viewport Layout -->
-  <main class="dashboard-viewport">
+  <!-- Main Content -->
+  <main class="main-content">
     
-    <!-- Expansive Map Radar Container -->
-    <section class="radar-map-container" id="radar-map-section">
-      
-      <!-- Floating Tactical Controls HUD -->
-      <div class="floating-hud-panel">
-        <div class="hud-search-box">
-          <svg class="hud-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-          <input type="text" id="search-input" placeholder="Filter coordinates, titles, or streets..." autocomplete="off">
+    <!-- Filter Controls Bar -->
+    <section class="filters-card">
+      <div class="filters-grid">
+        <div class="filter-item search-item">
+          <label for="search-input">Search Listings</label>
+          <div class="search-input-wrap">
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" id="search-input" placeholder="Search by title, street, or city..." autocomplete="off">
+          </div>
         </div>
 
-        <div class="hud-dropdown-wrap">
-          <label class="hud-label" for="filter-city">SECTOR</label>
-          <select id="filter-city" class="hud-select">
-            <option value="all">All Sectors</option>
+        <div class="filter-item">
+          <label for="filter-city">City</label>
+          <select id="filter-city">
+            <option value="all">All Cities</option>
           </select>
         </div>
 
-        <div class="hud-dropdown-wrap">
-          <label class="hud-label" for="filter-max-price">BUDGET</label>
-          <select id="filter-max-price" class="hud-select">
+        <div class="filter-item">
+          <label for="filter-max-price">Max Price</label>
+          <select id="filter-max-price">
             <option value="all">Any Price</option>
-            <option value="1200">≤ €1,200 (Budget)</option>
-            <option value="1600">≤ €1,600</option>
-            <option value="2000">≤ €2,000</option>
-            <option value="2500">≤ €2,500</option>
+            <option value="1200">Up to € 1,200</option>
+            <option value="1500">Up to € 1,500</option>
+            <option value="2000">Up to € 2,000</option>
+            <option value="2500">Up to € 2,500</option>
           </select>
         </div>
 
-        <div class="hud-dropdown-wrap hide-mobile">
-          <label class="hud-label" for="filter-sort">SORT</label>
-          <select id="filter-sort" class="hud-select">
-            <option value="newest">Recent Signal</option>
-            <option value="price-asc">Price: Low-High</option>
-            <option value="price-desc">Price: High-Low</option>
+        <div class="filter-item">
+          <label for="filter-sort">Sort By</label>
+          <select id="filter-sort">
+            <option value="newest">Newest First</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
           </select>
         </div>
 
-        <button id="btn-reset-filters" class="btn-hud-reset" title="Clear all active filters">
-          <span>RESET</span>
-        </button>
-      </div>
-
-      <!-- Tactical Map Viewport -->
-      <div id="map-wrapper" class="map-wrapper">
-        <div id="map"></div>
-        
-        <!-- Legend Overlay (Bottom Left) -->
-        <div class="map-hud-legend">
-          <div class="legend-title">SIGNAL SPECTRUM</div>
-          <div class="legend-items">
-            <span class="legend-badge tier-budget"><span class="badge-dot"></span> &lt; €1,300</span>
-            <span class="legend-badge tier-mid"><span class="badge-dot"></span> €1,300 - €2,000</span>
-            <span class="legend-badge tier-premium"><span class="badge-dot"></span> &gt; €2,000</span>
-          </div>
-        </div>
-
-        <!-- Floating Quick View Controls (Top Right) -->
-        <div class="map-hud-controls">
-          <button id="btn-reset-map" class="hud-mini-btn" title="Recenter on The Netherlands">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
-            <span>RECENTER NL</span>
-          </button>
-        </div>
-
-        <!-- Loading / Radar Sync Overlay -->
-        <div id="map-loading-overlay" class="map-overlay">
-          <div class="radar-scan-box">
-            <div class="sonar-ring"></div>
-            <div class="sonar-ring delayed"></div>
-            <div class="sonar-crosshair"></div>
-          </div>
-          <div class="radar-loading-text">
-            <div class="mono glow-text">ACQUIRING SUPABASE TELEMETRY...</div>
-            <div class="sub-text">Resolving geospatial coordinates & OSRM commute nodes</div>
-          </div>
+        <div class="filter-actions">
+          <button id="btn-reset-filters" class="btn-reset" title="Reset all filters">Reset</button>
         </div>
       </div>
     </section>
 
-    <!-- Property Listings Telemetry Feed -->
-    <section class="telemetry-feed-section">
-      <div class="feed-header">
-        <div class="feed-title-block">
-          <div class="feed-label-tag">TELEMETRY STREAM</div>
-          <h2 class="feed-title">AVAILABLE HOUSING UNITS</h2>
+    <!-- Map View -->
+    <section class="map-card">
+      <div class="map-card-header">
+        <div class="map-header-left">
+          <h2>Map View</h2>
+          <span class="map-hint">Showing properties with bike commute times to central stations</span>
         </div>
-        <div class="feed-meta">
-          <span class="feed-count-badge mono" id="listings-count-badge">0 NODES CAPTURED</span>
+        <div class="map-header-right">
+          <button id="btn-reset-map" class="btn-map-action" title="Recenter on The Netherlands">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+            <span>Reset View</span>
+          </button>
         </div>
       </div>
 
-      <!-- Grid of High-Tech Property Cards -->
+      <div id="map-wrapper" class="map-wrapper">
+        <div id="map"></div>
+        
+        <!-- Simple Price Legend -->
+        <div class="map-legend">
+          <span class="legend-chip chip-green"><span class="chip-dot"></span> &lt; €1,300</span>
+          <span class="legend-chip chip-blue"><span class="chip-dot"></span> €1,300 – €2,000</span>
+          <span class="legend-chip chip-purple"><span class="chip-dot"></span> &gt; €2,000</span>
+        </div>
+
+        <!-- Clean Loading Overlay -->
+        <div id="map-loading-overlay" class="map-loading-overlay">
+          <div class="loading-spinner"></div>
+          <p>Loading properties from Supabase...</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Listings Section -->
+    <section class="listings-section">
+      <div class="listings-header">
+        <div class="listings-title-wrap">
+          <h2>Available Properties</h2>
+          <span class="listings-badge" id="listings-count-badge">Loading...</span>
+        </div>
+      </div>
+
+      <!-- Properties Grid -->
       <div id="listings-grid" class="listings-grid">
-        <!-- Rendered dynamically by app.js -->
+        <!-- Rendered by app.js -->
       </div>
 
       <!-- Empty State -->
       <div id="empty-state" class="empty-state hidden">
-        <div class="empty-radar-icon">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#00f2fe" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="M12 2v4"/><path d="M12 18v4"/><path d="M2 12h4"/><path d="M18 12h4"/></svg>
-        </div>
-        <h3 class="mono text-cyan">NO ACTIVE SIGNALS MATCHING CRITERIA</h3>
-        <p>No property listings found for the current query or budget thresholds.</p>
-        <button id="btn-clear-empty" class="btn-cyber-primary">RESET SEARCH PARAMETERS</button>
+        <div class="empty-icon">🔍</div>
+        <h3>No matching properties found</h3>
+        <p>Try adjusting your search criteria or clearing your filters to see more results.</p>
+        <button id="btn-clear-empty" class="btn-primary">Clear Filters</button>
       </div>
     </section>
   </main>
 
-  <!-- Tactical Footer -->
-  <footer class="cyber-footer">
-    <div class="footer-inner">
-      <div class="footer-status mono">
-        <span class="status-pulse-green">●</span> SYSTEM: OPERATIONAL &nbsp;|&nbsp; DATA PROTOCOL: REST/v1 &nbsp;|&nbsp; TILES: CARTO DARK_MATTER
-      </div>
-      <div class="footer-copy mono">
-        NETHERLANDHUIZEN HOUSING RADAR &copy; 2026
-      </div>
+  <!-- Clean Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <p><strong>NetherlandHuizen</strong> &bull; Automated real-time rental tracker powered by Supabase & Leaflet</p>
+      <p class="footer-sub">Continuously updated from Dutch rental agencies.</p>
     </div>
   </footer>
 
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <!-- Application Telemetry Logic -->
+  <!-- Application Logic -->
   <script src="app.js"></script>
 </body>
 </html>
