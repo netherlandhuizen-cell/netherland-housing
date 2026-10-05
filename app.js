@@ -322,12 +322,16 @@ function renderMarkers() {
 
     const marker = L.marker(latLng, { icon: pinIcon });
 
+    const popupPrice = (prop.price && String(prop.price).toLowerCase().includes("netto"))
+      ? formatShortPrice(prop.price)
+      : (prop.price || '');
+
     // Clean Minimalist Popup
     const popupContent = `
       <div class="clean-popup-card">
         <div class="clean-popup-header">
           <span class="clean-popup-city">${escapeHtml(prop.city || 'Netherlands')}</span>
-          <span class="clean-popup-price">${escapeHtml(prop.price || '')}</span>
+          <span class="clean-popup-price">${escapeHtml(popupPrice)}</span>
         </div>
         <div class="clean-popup-title">${escapeHtml(prop.title || 'Rental Listing')}</div>
         ${prop.commute ? `<div class="clean-popup-commute">🚲 ${escapeHtml(prop.commute)}</div>` : ''}
@@ -393,12 +397,15 @@ function renderListings() {
 
     const key = prop.id || prop.link;
     const hasCoords = prop._lat != null && prop._lon != null && !isNaN(prop._lat) && !isNaN(prop._lon);
+    const cardPrice = (prop.price && String(prop.price).toLowerCase().includes("netto"))
+      ? `${formatShortPrice(prop.price)} / mo`
+      : (prop.price || 'Price on request');
 
     card.innerHTML = `
       <div>
         <div class="card-top">
           <span class="card-city-tag">${escapeHtml(prop.city || 'Netherlands')}</span>
-          <span class="card-price">${escapeHtml(prop.price || 'Price on request')}</span>
+          <span class="card-price">${escapeHtml(cardPrice)}</span>
         </div>
         <h3 class="card-title">${escapeHtml(prop.title || 'Rental Listing')}</h3>
       </div>
@@ -462,16 +469,62 @@ function renderListings() {
 
 function extractNumericPrice(priceStr) {
   if (!priceStr) return null;
-  const digitsOnly = priceStr.replace(/[^0-9]/g, "");
-  if (!digitsOnly) return null;
-  const num = parseInt(digitsOnly, 10);
-  return isNaN(num) ? null : num;
+  const text = String(priceStr).trim();
+
+  // 1. If string explicitly mentions 'brutto' or has parentheses with brutto
+  let targetNumStr = null;
+  const bruttoMatch = text.match(/(?:€\s*)?([0-9]+[0-9.,]*)\s*(?:euro)?\s*brutto/i) 
+                   || text.match(/brutto[:\s]*(?:€\s*)?([0-9]+[0-9.,]*)/i);
+  if (bruttoMatch) {
+    targetNumStr = bruttoMatch[1];
+  } else if (/netto/i.test(text)) {
+    const parenMatch = text.match(/\(\s*(?:€\s*)?([0-9]+[0-9.,]*)[^)]*\)/);
+    if (parenMatch) {
+      targetNumStr = parenMatch[1];
+    }
+  }
+
+  // 2. Standard single price
+  if (!targetNumStr) {
+    const cleaned = text.replace(/€/g, "").trim();
+    const matches = cleaned.match(/[0-9]+[0-9.,]*/g);
+    if (matches && matches.length > 0) {
+      targetNumStr = matches[0];
+    }
+  }
+
+  if (!targetNumStr) return null;
+
+  let val = targetNumStr.trim();
+  // Handle European vs US decimal / thousand separators
+  if (val.includes(",") && val.includes(".")) {
+    if (val.lastIndexOf(",") > val.lastIndexOf(".")) {
+      val = val.replace(/\./g, "").replace(",", ".");
+    } else {
+      val = val.replace(/,/g, "");
+    }
+  } else if (val.includes(",")) {
+    const parts = val.split(",");
+    if (parts[parts.length - 1].length === 2) {
+      val = val.replace(",", ".");
+    } else {
+      val = val.replace(/,/g, "");
+    }
+  } else if (val.includes(".")) {
+    const parts = val.split(".");
+    if (parts[parts.length - 1].length === 3) {
+      val = val.replace(/\./g, "");
+    }
+  }
+
+  const num = parseFloat(val);
+  return isNaN(num) ? null : Math.round(num);
 }
 
 function formatShortPrice(priceStr) {
   if (!priceStr) return "€ --";
   const num = extractNumericPrice(priceStr);
-  if (!num) return priceStr.slice(0, 10);
+  if (!num) return String(priceStr).slice(0, 10);
   return `€ ${num.toLocaleString('nl-NL')}`;
 }
 
