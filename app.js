@@ -108,14 +108,14 @@ function initMap() {
     }
   );
 
-  // Set Minimal Dark Canvas as default for sleek, professional dark mode
-  darkCanvas.addTo(map);
+  // Set Satellite Hybrid as default active map layer on startup
+  satelliteHybrid.addTo(map);
 
   // Add clean layer switcher control
   const baseLayers = {
+    "Satellite Hybrid": satelliteHybrid,
     "Minimal Dark Canvas": darkCanvas,
     "Muted Dark Vector": mutedDark,
-    "Satellite Hybrid": satelliteHybrid,
     "Topographic Terrain": topoMap
   };
   L.control.layers(baseLayers, null, { position: "topright" }).addTo(map);
