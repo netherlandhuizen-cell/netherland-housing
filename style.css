@@ -318,6 +318,12 @@ body {
   border-color: var(--accent-blue);
 }
 
+.filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .btn-reset {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--border);
@@ -328,11 +334,40 @@ body {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
 .btn-reset:hover {
   color: var(--text-primary);
   border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-share-search {
+  background: rgba(37, 211, 102, 0.12);
+  color: #25d366;
+  border: 1px solid rgba(37, 211, 102, 0.3);
+  padding: 0.5rem 0.85rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.btn-share-search:hover {
+  background: #25d366;
+  color: #ffffff;
+  border-color: #25d366;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(37, 211, 102, 0.35);
+}
+
+.btn-share-search svg {
+  flex-shrink: 0;
 }
 
 /* ==========================================================================

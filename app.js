@@ -39,6 +39,7 @@ const dom = {
   filterMaxPrice: document.getElementById("filter-max-price"),
   filterSort: document.getElementById("filter-sort"),
   btnResetFilters: document.getElementById("btn-reset-filters"),
+  btnShareSearch: document.getElementById("btn-share-search"),
   listingsGrid: document.getElementById("listings-grid"),
   listingsCountBadge: document.getElementById("listings-count-badge"),
   emptyState: document.getElementById("empty-state"),
@@ -198,10 +199,125 @@ function determineTier(price) {
 }
 
 // ---------------------------------------------------------------------------
-// 4. Filtering, Searching, & Sorting Logic
+// 4. Filtering, Searching, & Sorting Logic (with URL State Sync)
 // ---------------------------------------------------------------------------
 
-function applyFilters() {
+function initFiltersFromUrl() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+
+    const searchParam = params.get("search") || params.get("q");
+    if (searchParam && dom.searchInput) {
+      dom.searchInput.value = searchParam;
+    }
+
+    const cityParam = params.get("city");
+    if (cityParam && dom.filterCity) {
+      dom.filterCity.dataset.initialCity = cityParam.toLowerCase();
+      dom.filterCity.value = cityParam.toLowerCase();
+    }
+
+    const maxPriceParam = params.get("maxPrice") || params.get("price");
+    if (maxPriceParam && dom.filterMaxPrice) {
+      const exists = Array.from(dom.filterMaxPrice.options).some(o => o.value === maxPriceParam);
+      if (exists) {
+        dom.filterMaxPrice.value = maxPriceParam;
+      }
+    }
+
+    const sortParam = params.get("sort");
+    if (sortParam && dom.filterSort) {
+      const exists = Array.from(dom.filterSort.options).some(o => o.value === sortParam);
+      if (exists) {
+        dom.filterSort.value = sortParam;
+      }
+    }
+  } catch (err) {
+    console.warn("Could not read URL parameters:", err);
+  }
+}
+
+function syncStateToUrl() {
+  try {
+    const url = new URL(window.location.href);
+    const params = url.searchParams;
+
+    const city = (dom.filterCity.value || "all").toLowerCase();
+    const maxPrice = dom.filterMaxPrice.value || "all";
+    const search = (dom.searchInput.value || "").trim();
+    const sort = dom.filterSort.value || "newest";
+
+    if (city && city !== "all") {
+      params.set("city", city);
+    } else {
+      params.delete("city");
+    }
+
+    if (maxPrice && maxPrice !== "all") {
+      params.set("maxPrice", maxPrice);
+    } else {
+      params.delete("maxPrice");
+      params.delete("price");
+    }
+
+    if (search) {
+      params.set("search", search);
+    } else {
+      params.delete("search");
+      params.delete("q");
+    }
+
+    if (sort && sort !== "newest") {
+      params.set("sort", sort);
+    } else {
+      params.delete("sort");
+    }
+
+    const queryStr = params.toString();
+    const newPath = queryStr
+      ? `${window.location.pathname}?${queryStr}${window.location.hash}`
+      : `${window.location.pathname}${window.location.hash}`;
+
+    window.history.replaceState(null, "", newPath);
+  } catch (err) {
+    console.warn("Could not update URL query:", err);
+  }
+}
+
+function shareSearchViaWhatsApp() {
+  syncStateToUrl();
+  const currentUrl = window.location.href;
+
+  const search = (dom.searchInput.value || "").trim();
+  const city = dom.filterCity.value || "all";
+  const maxPrice = dom.filterMaxPrice.value || "all";
+
+  const details = [];
+  if (city && city !== "all") {
+    details.push(`City: ${city.charAt(0).toUpperCase() + city.slice(1)}`);
+  }
+  if (maxPrice && maxPrice !== "all") {
+    details.push(`Max: €${maxPrice}`);
+  }
+  if (search) {
+    details.push(`Query: "${search}"`);
+  }
+
+  let text = "Check out these rental listings matching my search";
+  if (details.length > 0) {
+    text += ` (${details.join(", ")})`;
+  }
+  text += `: ${currentUrl}`;
+
+  const shareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+  window.open(shareUrl, "_blank", "noopener,noreferrer");
+}
+
+function applyFilters(updateUrl = true) {
+  if (updateUrl) {
+    syncStateToUrl();
+  }
+
   const searchTerm = (dom.searchInput.value || "").trim().toLowerCase();
   const selectedCity = (dom.filterCity.value || "all").toLowerCase();
   const maxPrice = dom.filterMaxPrice.value;
@@ -268,6 +384,9 @@ function updateStats() {
 
 function updateDynamicCityOptions() {
   const currentVal = dom.filterCity.value;
+  const initialCity = dom.filterCity.dataset.initialCity;
+  const targetCity = (initialCity || currentVal || "all").toLowerCase();
+
   const cities = Array.from(new Set(
     allProperties
       .map(p => (p.city || "").trim())
@@ -283,9 +402,10 @@ function updateDynamicCityOptions() {
     dom.filterCity.appendChild(opt);
   });
 
-  if (currentVal && Array.from(dom.filterCity.options).some(o => o.value === currentVal)) {
-    dom.filterCity.value = currentVal;
+  if (targetCity && targetCity !== "all" && Array.from(dom.filterCity.options).some(o => o.value === targetCity)) {
+    dom.filterCity.value = targetCity;
   }
+  delete dom.filterCity.dataset.initialCity;
 }
 
 // ---------------------------------------------------------------------------
@@ -570,9 +690,10 @@ function escapeHtml(str) {
 function resetAllFilters() {
   dom.searchInput.value = "";
   dom.filterCity.value = "all";
+  delete dom.filterCity.dataset.initialCity;
   dom.filterMaxPrice.value = "all";
   dom.filterSort.value = "newest";
-  applyFilters();
+  applyFilters(true);
 }
 
 // ---------------------------------------------------------------------------
@@ -580,19 +701,27 @@ function resetAllFilters() {
 // ---------------------------------------------------------------------------
 
 function setupEventListeners() {
-  dom.searchInput.addEventListener("input", debounce(applyFilters, 200));
-  dom.filterCity.addEventListener("change", applyFilters);
-  dom.filterMaxPrice.addEventListener("change", applyFilters);
-  dom.filterSort.addEventListener("change", applyFilters);
+  dom.searchInput.addEventListener("input", debounce(() => applyFilters(true), 200));
+  dom.filterCity.addEventListener("change", () => applyFilters(true));
+  dom.filterMaxPrice.addEventListener("change", () => applyFilters(true));
+  dom.filterSort.addEventListener("change", () => applyFilters(true));
 
   dom.btnResetFilters.addEventListener("click", resetAllFilters);
   dom.btnClearEmpty.addEventListener("click", resetAllFilters);
+  if (dom.btnShareSearch) {
+    dom.btnShareSearch.addEventListener("click", shareSearchViaWhatsApp);
+  }
   dom.btnRefresh.addEventListener("click", fetchProperties);
 
   dom.btnResetMap.addEventListener("click", () => {
     if (map) {
       map.flyTo(DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM, { duration: 1.0 });
     }
+  });
+
+  window.addEventListener("popstate", () => {
+    initFiltersFromUrl();
+    applyFilters(false);
   });
 }
 
@@ -610,6 +739,7 @@ function debounce(func, wait) {
 
 // Initialize on DOM Ready
 document.addEventListener("DOMContentLoaded", () => {
+  initFiltersFromUrl();
   initMap();
   setupEventListeners();
   fetchProperties();
