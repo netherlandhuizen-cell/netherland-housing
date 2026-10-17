@@ -21,13 +21,21 @@
   --accent-blue: #3b82f6;
   --accent-blue-hover: #2563eb;
 
-  /* Price Tier Accents */
+  /* Price Tier Accents - Muted Professional Slate/Blue/Emerald (No Neon/Purple) */
+  --tier-budget: #10b981;
+  --tier-budget-bg: rgba(16, 185, 129, 0.08);
   --tier-green: #10b981;
-  --tier-green-bg: rgba(16, 185, 129, 0.1);
-  --tier-blue: #38bdf8;
-  --tier-blue-bg: rgba(56, 189, 248, 0.1);
-  --tier-purple: #a855f7;
-  --tier-purple-bg: rgba(168, 85, 247, 0.1);
+  --tier-green-bg: rgba(16, 185, 129, 0.08);
+
+  --tier-mid: #60a5fa;
+  --tier-mid-bg: rgba(96, 165, 250, 0.08);
+  --tier-blue: #60a5fa;
+  --tier-blue-bg: rgba(96, 165, 250, 0.08);
+
+  --tier-high: #94a3b8;
+  --tier-high-bg: rgba(148, 163, 184, 0.08);
+  --tier-purple: #94a3b8;
+  --tier-purple-bg: rgba(148, 163, 184, 0.08);
 
   --radius-sm: 6px;
   --radius-md: 10px;
@@ -151,6 +159,34 @@ body {
 
 .stat-text {
   color: var(--text-muted);
+}
+
+.btn-telegram {
+  background: #0284c7;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 0.4rem 0.9rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+.btn-telegram:hover {
+  background: #0369a1;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+}
+
+.icon-telegram {
+  flex-shrink: 0;
 }
 
 .btn-refresh {
@@ -394,13 +430,14 @@ body {
   border-radius: 50%;
 }
 
-.chip-green .chip-dot { background: var(--tier-green); box-shadow: 0 0 6px var(--tier-green); }
-.chip-blue .chip-dot { background: #00f2fe; box-shadow: 0 0 6px #00f2fe; }
-.chip-purple .chip-dot { background: var(--tier-purple); box-shadow: 0 0 6px var(--tier-purple); }
+.chip-budget .chip-dot, .chip-green .chip-dot { background: var(--tier-budget); }
+.chip-mid .chip-dot, .chip-blue .chip-dot { background: var(--tier-mid); }
+.chip-high .chip-dot, .chip-purple .chip-dot { background: var(--tier-high); }
 
-/* Vibrant Dark Vector Tiles Filter (High-contrast roads, land, water) */
+/* Muted Dark Vector Tiles Filter (Sleek dark theme without bright saturated neon colors) */
+.muted-dark-tiles,
 .vibrant-dark-tiles {
-  filter: invert(100%) hue-rotate(180deg) brightness(92%) contrast(115%) saturate(120%);
+  filter: invert(100%) hue-rotate(180deg) brightness(82%) contrast(95%) grayscale(45%);
 }
 
 /* Layer Switcher Styling */
@@ -466,7 +503,7 @@ body {
 }
 
 /* ==========================================================================
-   Clean Custom Map Markers (Rounded Price Pills with Glowing Borders)
+   Clean Custom Map Markers (Minimalist Price Pills - Muted Slate/Blue/Emerald)
    ========================================================================== */
 
 .custom-map-pin {
@@ -480,14 +517,15 @@ body {
   gap: 5px;
   padding: 3px 8px;
   border-radius: var(--radius-pill);
-  background: rgba(18, 18, 22, 0.95);
-  backdrop-filter: blur(8px);
+  background: #18181b;
+  border: 1px solid rgba(255, 255, 255, 0.14);
   color: #ffffff;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   font-family: var(--font-sans);
   cursor: pointer;
   white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
   transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -498,50 +536,56 @@ body {
   flex-shrink: 0;
 }
 
-/* Color Coded Tiers with Subtle Glowing Borders */
+/* Minimalist Tier Borders & Muted Dot Accents (No Neon Glow) */
+.price-pill-pin.tier-budget,
 .price-pill-pin.tier-green {
-  border: 1.5px solid #10b981;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), 0 0 10px rgba(16, 185, 129, 0.45);
+  border-color: rgba(16, 185, 129, 0.4);
 }
+.price-pill-pin.tier-budget .pin-dot,
 .price-pill-pin.tier-green .pin-dot {
   background: #10b981;
-  box-shadow: 0 0 6px #10b981;
 }
+.price-pill-pin.tier-budget:hover,
 .price-pill-pin.tier-green:hover,
+.price-pill-pin.tier-budget.active-pin,
 .price-pill-pin.tier-green.active-pin {
-  border-color: #34d399;
-  transform: scale(1.12);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.8), 0 0 18px rgba(16, 185, 129, 0.7);
+  border-color: #10b981;
+  transform: translateY(-1px) scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
 }
 
+.price-pill-pin.tier-mid,
 .price-pill-pin.tier-blue {
-  border: 1.5px solid #00f2fe;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), 0 0 10px rgba(0, 242, 254, 0.45);
+  border-color: rgba(96, 165, 250, 0.4);
 }
+.price-pill-pin.tier-mid .pin-dot,
 .price-pill-pin.tier-blue .pin-dot {
-  background: #00f2fe;
-  box-shadow: 0 0 6px #00f2fe;
+  background: #60a5fa;
 }
+.price-pill-pin.tier-mid:hover,
 .price-pill-pin.tier-blue:hover,
+.price-pill-pin.tier-mid.active-pin,
 .price-pill-pin.tier-blue.active-pin {
-  border-color: #38bdf8;
-  transform: scale(1.12);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.8), 0 0 18px rgba(0, 242, 254, 0.7);
+  border-color: #60a5fa;
+  transform: translateY(-1px) scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
 }
 
+.price-pill-pin.tier-high,
 .price-pill-pin.tier-purple {
-  border: 1.5px solid #c084fc;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), 0 0 10px rgba(192, 132, 252, 0.45);
+  border-color: rgba(148, 163, 184, 0.4);
 }
+.price-pill-pin.tier-high .pin-dot,
 .price-pill-pin.tier-purple .pin-dot {
-  background: #c084fc;
-  box-shadow: 0 0 6px #c084fc;
+  background: #94a3b8;
 }
+.price-pill-pin.tier-high:hover,
 .price-pill-pin.tier-purple:hover,
+.price-pill-pin.tier-high.active-pin,
 .price-pill-pin.tier-purple.active-pin {
-  border-color: #e879f9;
-  transform: scale(1.12);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.8), 0 0 18px rgba(192, 132, 252, 0.7);
+  border-color: #cbd5e1;
+  transform: translateY(-1px) scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
 }
 
 /* Leaflet Popup Styling */
@@ -748,9 +792,9 @@ body {
   align-items: center;
   gap: 0.4rem;
   font-size: 0.75rem;
-  color: var(--tier-blue);
-  background: var(--tier-blue-bg);
-  border: 1px solid rgba(56, 189, 248, 0.2);
+  color: var(--tier-mid);
+  background: var(--tier-mid-bg);
+  border: 1px solid rgba(96, 165, 250, 0.2);
   padding: 0.3rem 0.6rem;
   border-radius: 4px;
 }
@@ -883,7 +927,10 @@ body {
 
   .nav-stats {
     width: 100%;
-    justify-content: space-between;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
   }
 
   .filters-grid {

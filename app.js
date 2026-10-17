@@ -63,17 +63,27 @@ function initMap() {
   // Re-add zoom control to bottom right
   L.control.zoom({ position: "bottomright" }).addTo(map);
 
-  // Layer 1: Vibrant Dark Vector (High-contrast dark mode highlighting roads, landmasses, water)
-  const vibrantDark = L.tileLayer(
+  // Layer 1: Minimalist Dark Canvas (Esri World Dark Gray Base - Clean, neutral, zero watermarks)
+  const darkCanvas = L.tileLayer(
+    "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+    {
+      attribution: "Tiles &copy; Esri &mdash; Esri, DeLorme",
+      maxZoom: 18,
+      maxNativeZoom: 16
+    }
+  );
+
+  // Layer 2: Muted Dark Vector (OpenStreetMap with toned-down, muted dark styling)
+  const mutedDark = L.tileLayer(
     "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
     {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors',
       maxZoom: 19,
-      className: "vibrant-dark-tiles"
+      className: "muted-dark-tiles"
     }
   );
 
-  // Layer 2: Satellite Hybrid (Vibrant satellite terrain with roads & city boundaries)
+  // Layer 3: Satellite Hybrid (Satellite terrain with clear roads & labels)
   const satelliteBase = L.tileLayer(
     "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
     {
@@ -89,7 +99,7 @@ function initMap() {
   );
   const satelliteHybrid = L.layerGroup([satelliteBase, boundariesOverlay]);
 
-  // Layer 3: Vibrant Topographic Terrain (Rich elevation contours, rivers, nature parks)
+  // Layer 4: Topographic Terrain
   const topoMap = L.tileLayer(
     "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
     {
@@ -98,25 +108,15 @@ function initMap() {
     }
   );
 
-  // Layer 4: Minimalist Dark Canvas
-  const darkCanvas = L.tileLayer(
-    "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
-    {
-      attribution: "Tiles &copy; Esri &mdash; Esri, DeLorme",
-      maxZoom: 18,
-      maxNativeZoom: 16
-    }
-  );
-
-  // Set Vibrant Dark Vector as active default (highlights roads and water against dark background)
-  vibrantDark.addTo(map);
+  // Set Minimal Dark Canvas as default for sleek, professional dark mode
+  darkCanvas.addTo(map);
 
   // Add clean layer switcher control
   const baseLayers = {
-    "Vibrant Dark": vibrantDark,
+    "Minimal Dark Canvas": darkCanvas,
+    "Muted Dark Vector": mutedDark,
     "Satellite Hybrid": satelliteHybrid,
-    "Topographic Terrain": topoMap,
-    "Minimal Dark Canvas": darkCanvas
+    "Topographic Terrain": topoMap
   };
   L.control.layers(baseLayers, null, { position: "topright" }).addTo(map);
 
@@ -185,10 +185,10 @@ async function fetchProperties() {
 // ---------------------------------------------------------------------------
 
 function determineTier(price) {
-  if (!price) return "tier-blue";
-  if (price < 1300) return "tier-green";    // Budget (< €1,300)
-  if (price <= 2000) return "tier-blue";    // Mid-tier (€1,300 - €2,000)
-  return "tier-purple";                     // Premium (> €2,000)
+  if (!price) return "tier-mid";
+  if (price < 1300) return "tier-budget";    // Budget (< €1,300)
+  if (price <= 2000) return "tier-mid";       // Mid-tier (€1,300 - €2,000)
+  return "tier-high";                         // Upper tier (> €2,000)
 }
 
 // ---------------------------------------------------------------------------
@@ -303,7 +303,7 @@ function renderMarkers() {
     validLatLngs.push(latLng);
 
     const shortPrice = formatShortPrice(prop.price);
-    const tier = prop._tier || "tier-blue";
+    const tier = prop._tier || "tier-mid";
     const key = prop.id || prop.link;
 
     // Clean Rounded Price Pill Marker
