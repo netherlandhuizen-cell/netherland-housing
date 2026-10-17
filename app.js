@@ -153,7 +153,13 @@ async function fetchProperties() {
     }
 
     const data = await response.json();
-    allProperties = Array.isArray(data) ? data : [];
+    const rawProperties = Array.isArray(data) ? data : [];
+
+    // Filter out properties under €100 (parking spots, storage units, €0 or €10 placeholders)
+    allProperties = rawProperties.filter(prop => {
+      const num = extractNumericPrice(prop.price);
+      return num === null || num >= 100;
+    });
 
     // Parse numeric price and price tier for filtering
     allProperties.forEach(prop => {
